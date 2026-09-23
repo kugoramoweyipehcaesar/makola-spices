@@ -22,7 +22,7 @@ export default function MaintenancePage() {
       router.replace("/admin/login");
       return;
     }
-    if (!isSuperAdmin(user.email) && user.role !== "SUPER_ADMIN") {
+    if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN" && !isSuperAdmin(user.email)) {
       router.replace("/admin");
       return;
     }
@@ -40,7 +40,7 @@ export default function MaintenancePage() {
     resetAllOrders();
     setCounts({ admin: 0, user: 0 });
     setConfirm("");
-    setMsg("All orders cleared on this browser.");
+    setMsg("All orders permanently cleared.");
   }
 
   if (!ready || !user) {
@@ -64,7 +64,7 @@ export default function MaintenancePage() {
         </Link>
         <h1 className="text-2xl font-bold text-red-700">Maintenance</h1>
         <p className="text-sm text-gray-600">
-          Super Admin only. Reset clears order data stored in this browser (localStorage).
+          Admin maintenance: permanently delete all orders (admin queue + customer history) on this browser. Cannot be undone.
         </p>
 
         <div className="rounded-2xl border bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
@@ -77,7 +77,7 @@ export default function MaintenancePage() {
         )}
 
         <div className="space-y-3 rounded-2xl border-2 border-red-200 bg-red-50 p-4 dark:bg-red-950/30">
-          <p className="font-bold text-red-700">Reset all orders</p>
+          <p className="font-bold text-red-700">Reset all orders permanently</p>
           <p className="text-xs text-red-600">
             Type <strong>RESET</strong> below, then confirm. This cannot be undone.
           </p>
@@ -88,7 +88,7 @@ export default function MaintenancePage() {
             onChange={(e) => setConfirm(e.target.value)}
           />
           <button type="button" onClick={handleReset} className="w-full rounded-2xl bg-red-600 py-3 font-bold text-white">
-            Clear all orders now
+            Reset all orders permanently
           </button>
         </div>
       </div>
