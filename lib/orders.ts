@@ -21,7 +21,7 @@ export const USER_ORDERS_KEY = "makola-orders";
 export const ORDERS_EVENT = "makola-orders-updated";
 
 export function formatOrderDate(iso?: string): string {
-  if (!iso) return "—";
+  if (!iso) return "\u2014";
   try {
     const d = new Date(iso);
     if (Number.isNaN(d.getTime())) return iso;
@@ -93,7 +93,6 @@ export function notifyOrdersChanged() {
   } catch { /* ignore */ }
 }
 
-/** Update status in BOTH admin + customer stores so whole site reflects immediately. */
 export function updateOrderStatus(id: string, status: string): StoredOrder[] {
   const now = new Date().toISOString();
   const admin = loadAdminOrders().map((o) =>
@@ -119,7 +118,15 @@ export function updateOrderStatus(id: string, status: string): StoredOrder[] {
 export function resetAllOrders() {
   localStorage.removeItem(ADMIN_ORDERS_KEY);
   localStorage.removeItem(USER_ORDERS_KEY);
+  try {
+    localStorage.removeItem("makola-admin-orders");
+    localStorage.removeItem("makola-orders");
+  } catch { /* ignore */ }
   notifyOrdersChanged();
+  try {
+    localStorage.setItem("makola-orders-bump", String(Date.now()));
+    window.dispatchEvent(new Event(ORDERS_EVENT));
+  } catch { /* ignore */ }
 }
 
 export function findOrderById(id: string): StoredOrder | null {
@@ -129,7 +136,6 @@ export function findOrderById(id: string): StoredOrder | null {
   return all.find((o) => o.id.toLowerCase() === q || o.id.toLowerCase().includes(q)) || null;
 }
 
-/** Subscribe to order changes (same tab + other tabs). */
 export function onOrdersChanged(cb: () => void) {
   if (typeof window === "undefined") return () => {};
   const handler = () => cb();

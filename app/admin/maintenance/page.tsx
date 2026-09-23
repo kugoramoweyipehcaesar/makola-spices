@@ -40,13 +40,14 @@ export default function MaintenancePage() {
     resetAllOrders();
     setCounts({ admin: 0, user: 0 });
     setConfirm("");
-    setMsg("All orders permanently cleared.");
+    setMsg("All orders permanently cleared. Refreshing website\u2026");
+    setTimeout(() => window.location.reload(), 700);
   }
 
   if (!ready || !user) {
     return (
       <div className="flex min-h-[100dvh] items-center justify-center bg-makola-green text-white">
-        Loading…
+        Loading\u2026
       </div>
     );
   }
@@ -60,16 +61,16 @@ export default function MaintenancePage() {
 
       <div className="mx-auto max-w-lg space-y-4 px-4 py-8">
         <Link href="/admin" className="text-sm font-semibold text-makola-orange">
-          ← Back to admin
+          \u2190 Back to admin
         </Link>
         <h1 className="text-2xl font-bold text-red-700">Maintenance</h1>
         <p className="text-sm text-gray-600">
-          Admin maintenance: permanently delete all orders (admin queue + customer history) on this browser. Cannot be undone.
+          Permanently delete all orders site-wide. The website will auto-refresh after reset.
         </p>
 
         <div className="rounded-2xl border bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-          <p className="text-sm">Admin orders list: <strong>{counts.admin}</strong></p>
-          <p className="text-sm">Customer orders list: <strong>{counts.user}</strong></p>
+          <p className="text-sm">Admin orders: <strong>{counts.admin}</strong></p>
+          <p className="text-sm">Customer orders: <strong>{counts.user}</strong></p>
         </div>
 
         {msg && (
@@ -79,7 +80,7 @@ export default function MaintenancePage() {
         <div className="space-y-3 rounded-2xl border-2 border-red-200 bg-red-50 p-4 dark:bg-red-950/30">
           <p className="font-bold text-red-700">Reset all orders permanently</p>
           <p className="text-xs text-red-600">
-            Type <strong>RESET</strong> below, then confirm. This cannot be undone.
+            Type <strong>RESET</strong> below, then confirm.
           </p>
           <input
             className="input-lg"
