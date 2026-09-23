@@ -1,12 +1,17 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { BottomNav } from "@/components/BottomNav";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { findOrderById, type StoredOrder } from "@/lib/orders";
+import {
+  findOrderById,
+  onOrdersChanged,
+  formatOrderDate,
+  type StoredOrder,
+} from "@/lib/orders";
 import { formatGhs } from "@/lib/utils";
 
 const FLOW = ["Pending", "Processing", "On the way", "Delivered"];
@@ -17,14 +22,28 @@ function TrackOrderInner() {
   const [order, setOrder] = useState<StoredOrder | null>(null);
   const [error, setError] = useState("");
 
+  const load = useCallback((oid: string) => {
+    if (!oid.trim()) return;
+    const found = findOrderById(oid);
+    if (found) {
+      setOrder(found);
+      setError("");
+    }
+  }, []);
+
   useEffect(() => {
     const q = searchParams.get("id");
     if (q) {
       setId(q);
-      const found = findOrderById(q);
-      if (found) setOrder(found);
+      load(q);
     }
-  }, [searchParams]);
+  }, [searchParams, load]);
+
+  useEffect(() => {
+    return onOrdersChanged(() => {
+      if (id) load(id);
+    });
+  }, [id, load]);
 
   function search(e: React.FormEvent) {
     e.preventDefault();
@@ -51,7 +70,7 @@ function TrackOrderInner() {
 
       <div className="mx-auto w-full max-w-lg space-y-4 px-4 py-6">
         <h1 className="text-2xl font-bold text-makola-green dark:text-green-400">Track order</h1>
-        <p className="text-sm text-gray-500">Enter your order ID (e.g. ORD-XXXX)</p>
+        <p className="text-sm text-gray-500">Status updates live when admin changes it</p>
 
         <form onSubmit={search} className="space-y-3 rounded-2xl bg-white p-4 shadow-sm dark:bg-zinc-900">
           <input
@@ -78,6 +97,12 @@ function TrackOrderInner() {
                 <p className="text-sm text-gray-500">
                   {order.customer} · {order.stall}
                 </p>
+                <p className="mt-1 text-xs font-medium text-gray-500">
+                  Placed: {formatOrderDate(order.createdAt)}
+                </p>
+                {order.updatedAt && (
+                  <p className="text-xs text-gray-400">Last update: {formatOrderDate(order.updatedAt)}</p>
+                )}
               </div>
               <span className="h-fit rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700">
                 {order.status}

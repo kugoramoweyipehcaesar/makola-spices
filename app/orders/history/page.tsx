@@ -1,38 +1,59 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { BottomNav } from "@/components/BottomNav";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/lib/auth";
-import { loadAdminOrders, loadUserOrders, type StoredOrder } from "@/lib/orders";
+import {
+  loadAdminOrders,
+  loadUserOrders,
+  onOrdersChanged,
+  formatOrderDate,
+  type StoredOrder,
+} from "@/lib/orders";
 import { formatGhs } from "@/lib/utils";
 
 export default function OrderHistoryPage() {
   const { user } = useAuth();
   const [orders, setOrders] = useState<StoredOrder[]>([]);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     const userOrders = loadUserOrders();
     const adminOrders = loadAdminOrders();
     const map = new Map<string, StoredOrder>();
-    [...adminOrders, ...userOrders].forEach((o) => map.set(o.id, o));
+    [...userOrders, ...adminOrders].forEach((o) => {
+      const prev = map.get(o.id);
+      if (!prev) map.set(o.id, o);
+      else {
+        const a = prev.updatedAt || prev.createdAt || "";
+        const b = o.updatedAt || o.createdAt || "";
+        map.set(o.id, b >= a ? { ...prev, ...o } : { ...o, ...prev, status: o.status || prev.status });
+      }
+    });
     let list = Array.from(map.values());
     if (user?.phone || user?.name) {
       const phone = (user.phone || "").replace(/\D/g, "");
       const name = (user.name || "").toLowerCase();
       const filtered = list.filter(
         (o) =>
-          (o.phone && o.phone.replace(/\D/g, "").endsWith(phone.slice(-9))) ||
-          (o.customer && o.customer.toLowerCase() === name) ||
-          !user
+          (o.phone && phone && o.phone.replace(/\D/g, "").endsWith(phone.slice(-9))) ||
+          (o.customer && name && o.customer.toLowerCase() === name) ||
+          user.role === "RIDER" ||
+          user.role === "ADMIN" ||
+          user.role === "SUPER_ADMIN"
       );
       if (filtered.length) list = filtered;
     }
     list.sort((a, b) => (b.createdAt || b.id).localeCompare(a.createdAt || a.id));
     setOrders(list);
   }, [user]);
+
+  useEffect(() => {
+    refresh();
+    return onOrdersChanged(refresh);
+  }, [refresh]);
 
   return (
     <div className="min-h-[100dvh] w-full bg-makola-cream pb-28 dark:bg-zinc-950">
@@ -43,7 +64,7 @@ export default function OrderHistoryPage() {
 
       <div className="mx-auto w-full max-w-lg space-y-4 px-4 py-6">
         <h1 className="text-2xl font-bold text-makola-green dark:text-green-400">Order history</h1>
-        <p className="text-sm text-gray-500">Past and current orders on this device</p>
+        <p className="text-sm text-gray-500">Statuses update live when admin changes them</p>
 
         <div className="flex gap-2">
           <Link href="/orders/track" className="btn-outline flex-1 text-center text-sm py-2">
@@ -75,6 +96,12 @@ export default function OrderHistoryPage() {
                     {o.status}
                   </span>
                 </div>
+                <p className="mt-1 text-xs font-medium text-gray-500">
+                  Placed: {formatOrderDate(o.createdAt)}
+                </p>
+                {o.updatedAt && o.updatedAt !== o.createdAt && (
+                  <p className="text-xs text-gray-400">Updated: {formatOrderDate(o.updatedAt)}</p>
+                )}
                 <p className="mt-1 text-sm text-gray-600">{o.item}</p>
                 <p className="mt-1 font-semibold text-makola-orange">{formatGhs(o.amount)}</p>
                 <p className="text-xs text-gray-400">{o.stall}</p>
