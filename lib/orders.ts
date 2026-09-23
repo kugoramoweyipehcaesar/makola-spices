@@ -1,3 +1,5 @@
+import { notifyLive } from "@/lib/live";
+
 export type StoredOrder = {
   id: string;
   customer: string;
@@ -90,6 +92,7 @@ export function notifyOrdersChanged() {
   try {
     window.dispatchEvent(new Event(ORDERS_EVENT));
     localStorage.setItem("makola-orders-bump", String(Date.now()));
+    notifyLive("orders");
   } catch { /* ignore */ }
 }
 
