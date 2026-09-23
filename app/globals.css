@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  body {
+    @apply antialiased;
+    font-size: 16px;
+    max-width: 100vw;
+    overflow-x: hidden;
+    width: 100%;
+  }
+}
+
+@layer components {
+  .btn-orange {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-makola-orange px-6 py-3.5 text-base font-bold text-white shadow-md transition active:scale-[0.98] hover:bg-makola-orange-dark disabled:opacity-60;
+  }
+  .btn-green {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl bg-makola-green-light px-6 py-3.5 text-base font-bold text-white shadow-md transition active:scale-[0.98] hover:bg-makola-green disabled:opacity-60;
+  }
+  .btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-2xl border-2 border-makola-orange bg-white px-6 py-3.5 text-base font-bold text-makola-orange transition active:scale-[0.98] hover:bg-orange-50 dark:bg-zinc-900 dark:hover:bg-zinc-800;
+  }
+  .input-lg {
+    @apply w-full rounded-2xl border-2 border-orange-200 bg-white px-4 py-3.5 text-base outline-none placeholder:text-gray-400 focus:border-makola-orange focus:ring-2 focus:ring-orange-200 dark:border-zinc-600 dark:bg-zinc-900 dark:text-white dark:placeholder:text-zinc-500;
+  }
+  .card-spice {
+    @apply rounded-2xl border border-orange-100 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900;
+  }
+}
+
+.dark body {
+  background-color: #09090b;
+  color: #f4f4f5;
+}

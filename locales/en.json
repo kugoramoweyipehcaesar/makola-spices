@@ -1,0 +1,22 @@
+{
+  "appName": "Makola Spices Direct",
+  "tagline": "We Bring Spices To Your Shop — No Trotro!",
+  "orderWhatsApp": "Order on WhatsApp",
+  "login": "Welcome back!",
+  "noPassword": "No password needed.",
+  "phone": "Phone Number",
+  "otp": "OTP Code",
+  "loginWhatsApp": "Login with WhatsApp",
+  "loginVoice": "Login with Voice",
+  "createAccount": "Create account",
+  "shop": "Shop Spices",
+  "addBasket": "Add to Basket",
+  "home": "Home",
+  "orders": "Orders",
+  "account": "Account",
+  "help": "Help",
+  "checkout": "Checkout",
+  "deliveryFee": "Delivery fee",
+  "total": "Total",
+  "placeOrder": "Place Order"
+}
