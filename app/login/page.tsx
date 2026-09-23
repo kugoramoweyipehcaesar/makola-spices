@@ -30,7 +30,7 @@ function LoginForm() {
     const role = res.user?.role;
     const next = searchParams.get("next");
     if (role === "SUPER_ADMIN" || role === "ADMIN") router.push("/admin");
-    else if (role === "RIDER") router.push("/rider");
+    else if (role === "RIDER") router.push("/orders/history");
     else if (next && next.startsWith("/")) router.push(next);
     else router.push("/shop");
   }
