@@ -4,24 +4,34 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ShoppingBag, ClipboardList, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
-const ITEMS = [
+const SHOP_ITEMS = [
   { href: "/", label: "Home", icon: Home },
   { href: "/shop", label: "Shop", icon: ShoppingBag },
   { href: "/orders/history", label: "Orders", icon: ClipboardList },
   { href: "/account", label: "Account", icon: User },
 ];
 
+const RIDER_ITEMS = [
+  { href: "/orders/history", label: "Orders", icon: ClipboardList },
+  { href: "/account", label: "Account", icon: User },
+];
+
 export function BottomNav({ variant = "shop" }: { variant?: "shop" | "home" }) {
   const path = usePathname();
-  const items =
-    variant === "home"
+  const { user } = useAuth();
+  const isRider = user?.role === "RIDER";
+
+  const items = isRider
+    ? RIDER_ITEMS
+    : variant === "home"
       ? [
           { href: "/", label: "Home", icon: Home },
           { href: "/orders/history", label: "Orders", icon: ClipboardList },
           { href: "/account", label: "Account", icon: User },
         ]
-      : ITEMS;
+      : SHOP_ITEMS;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-30 w-full border-t border-orange-100 bg-white dark:border-zinc-800 dark:bg-zinc-950">
