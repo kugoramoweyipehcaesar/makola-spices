@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  AlertTriangle, BarChart3, Bike, ClipboardList, HelpCircle, LogOut,
+  AlertTriangle, BarChart3, Bike, ClipboardList, HelpCircle, LogOut, Settings,
   Package, Phone, Plus, Smartphone, Trash2, Users,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
@@ -11,12 +12,12 @@ import { isSuperAdmin, type Role, type Spice } from "@/data/spices";
 import { loadProducts, addProduct, updateProduct, deleteProduct } from "@/lib/products";
 import { loadSettings, saveSettings, type AppSettings } from "@/lib/settings";
 import { loadFeedback, type Feedback } from "@/lib/feedback";
-import { updateOrderStatus, formatOrderDate, loadAdminOrders, saveAdminOrders } from "@/lib/orders";
+import { updateOrderStatus, formatOrderDate, loadAdminOrders, saveAdminOrders, resetAllOrders } from "@/lib/orders";
 import { BrandLogo } from "@/components/BrandLogo";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { cn, formatGhs } from "@/lib/utils";
 
-type Tab = "orders" | "spices" | "users" | "riders" | "payments" | "reports" | "help";
+type Tab = "orders" | "spices" | "users" | "riders" | "payments" | "reports" | "help" | "maintenance";
 
 const ORDER_STATUSES = ["Pending", "Processing", "On the way", "Delivered", "Cancelled"] as const;
 
@@ -119,6 +120,7 @@ export default function AdminPage() {
     { id: "payments", label: "Payments (MoMo)", icon: Smartphone },
     { id: "reports", label: "Reports", icon: BarChart3 },
     { id: "help", label: "Help & Support", icon: HelpCircle },
+    { id: "maintenance", label: "Maintenance", icon: Settings },
   ];
 
   function handleAddProduct(e: React.FormEvent) {
@@ -314,15 +316,8 @@ export default function AdminPage() {
                       <p className="text-xs text-gray-500">{u.phone} \u00b7 {u.email}</p>
                     </div>
                     <div className="flex flex-wrap gap-2">
-                      <select
-                        className="rounded-lg border px-2 py-1 text-xs"
-                        value={u.role}
-                        disabled={isSuperAdmin(u.email)}
-                        onChange={(e) => {
-                          const r = e.target.value as Role;
-                          showToast(setRole(u.id, r).ok ? `Role \u2192 ${r}` : "Failed");
-                        }}
-                      >
+                      <select className="rounded-lg border px-2 py-1 text-xs" value={u.role} disabled={isSuperAdmin(u.email)}
+                        onChange={(e) => { const r = e.target.value as Role; showToast(setRole(u.id, r).ok ? `Role \u2192 ${r}` : "Failed"); }}>
                         <option value="BUYER">Buyer</option>
                         <option value="RIDER">Rider</option>
                         <option value="ADMIN">Admin</option>
@@ -344,7 +339,7 @@ export default function AdminPage() {
             <div>
               <h1 className="text-xl font-bold sm:text-2xl">Delivery Riders</h1>
               <div className="mt-4 space-y-2">
-                {riders.length === 0 && <p className="text-gray-500">No riders yet. Promote a user to Rider under Users & Roles.</p>}
+                {riders.length === 0 && <p className="text-gray-500">No riders yet.</p>}
                 {riders.map((r) => (
                   <div key={r.id} className="rounded-xl border bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
                     <p className="font-bold">{r.name}</p>
@@ -367,14 +362,10 @@ export default function AdminPage() {
           {tab === "reports" && (
             <div>
               <h1 className="text-xl font-bold sm:text-2xl">Reports</h1>
-              <p className="mt-2 text-sm text-gray-500">Top products by order count</p>
               <div className="mt-4 space-y-2">
                 {productSales.map((p) => (
                   <div key={p.name}>
-                    <div className="flex justify-between text-sm">
-                      <span>{p.name}</span>
-                      <span className="font-bold">{p.count}</span>
-                    </div>
+                    <div className="flex justify-between text-sm"><span>{p.name}</span><span className="font-bold">{p.count}</span></div>
                     <div className="mt-1 h-2 rounded-full bg-gray-100">
                       <div className="h-2 rounded-full bg-makola-orange" style={{ width: `${(p.count / maxProductCount) * 100}%` }} />
                     </div>
@@ -392,11 +383,43 @@ export default function AdminPage() {
                 {feedback.map((f) => (
                   <div key={f.id} className="rounded-xl border bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
                     <p className="text-xs uppercase text-gray-400">{f.type}</p>
-                    <p className="font-semibold">{f.name} \u00b7 {f.phone}</p>
+                    <p className="font-semibold">{f.name}</p>
                     <p className="text-sm">{f.message}</p>
                   </div>
                 ))}
               </div>
+            </div>
+          )}
+
+          {tab === "maintenance" && (
+            <div className="max-w-lg space-y-4">
+              <h1 className="text-xl font-bold text-red-700 sm:text-2xl">Maintenance</h1>
+              <p className="text-sm text-gray-600">
+                Permanently delete all orders across the whole website. Cannot be undone. Page auto-refreshes after reset.
+              </p>
+              <div className="rounded-2xl border-2 border-red-300 bg-red-50 p-4 dark:bg-red-950/30">
+                <p className="font-bold text-red-700">Reset all orders</p>
+                <p className="mt-1 text-xs text-red-600">
+                  Clears admin queue, customer history, track & rider views immediately.
+                </p>
+                <button
+                  type="button"
+                  className="mt-4 w-full rounded-2xl bg-red-600 py-3.5 font-bold text-white"
+                  onClick={() => {
+                    if (!confirm("PERMANENTLY reset ALL orders on the whole website?")) return;
+                    if (!confirm("This cannot be undone. Continue?")) return;
+                    resetAllOrders();
+                    setOrders([]);
+                    showToast("All orders cleared \u2014 refreshing\u2026");
+                    setTimeout(() => window.location.reload(), 600);
+                  }}
+                >
+                  Reset all orders permanently
+                </button>
+              </div>
+              <Link href="/admin/maintenance" className="text-sm font-semibold text-makola-orange underline">
+                Open full maintenance page \u2192
+              </Link>
             </div>
           )}
         </main>
