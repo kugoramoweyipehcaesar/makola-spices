@@ -1,3 +1,5 @@
+import { notifyLive } from "@/lib/live";
+
 const KEY = "makola-settings-v1";
 
 export type AppSettings = {
@@ -21,4 +23,5 @@ export function loadSettings(): AppSettings {
 
 export function saveSettings(s: AppSettings) {
   localStorage.setItem(KEY, JSON.stringify(s));
+  notifyLive("settings");
 }

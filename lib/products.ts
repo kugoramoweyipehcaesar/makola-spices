@@ -1,4 +1,5 @@
 import { SPICES, type Spice } from "@/data/spices";
+import { notifyLive } from "@/lib/live";
 
 export type Product = Spice & { image?: string };
 
@@ -19,6 +20,7 @@ export function loadProducts(): Product[] {
 
 export function saveProducts(list: Product[]) {
   localStorage.setItem(KEY, JSON.stringify(list));
+  notifyLive("products");
 }
 
 export function addProduct(p: Omit<Product, "id"> & { id?: string }): Product[] {

@@ -3,12 +3,12 @@
 import { useEffect } from "react";
 import { onOrdersChanged } from "@/lib/orders";
 
-/** On full order reset, reload open tabs so the whole site shows empty orders. */
+/** Full page reload after complete order reset so every screen is empty. */
 export function OrdersLiveSync() {
   useEffect(() => {
     let lastBump = localStorage.getItem("makola-orders-bump") || "";
 
-    const unsub = onOrdersChanged(() => {
+    return onOrdersChanged(() => {
       const bump = localStorage.getItem("makola-orders-bump") || "";
       if (bump && bump !== lastBump) {
         lastBump = bump;
@@ -27,8 +27,6 @@ export function OrdersLiveSync() {
         } catch { /* ignore */ }
       }
     });
-
-    return unsub;
   }, []);
 
   return null;
