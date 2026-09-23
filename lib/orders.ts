@@ -13,28 +13,49 @@ export type StoredOrder = {
   momoReference?: string;
   productIds?: string[];
   createdAt?: string;
+  updatedAt?: string;
 };
 
-const ADMIN_KEY = "makola-admin-orders";
-const USER_KEY = "makola-orders";
+export const ADMIN_ORDERS_KEY = "makola-admin-orders";
+export const USER_ORDERS_KEY = "makola-orders";
+export const ORDERS_EVENT = "makola-orders-updated";
+
+export function formatOrderDate(iso?: string): string {
+  if (!iso) return "—";
+  try {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  } catch {
+    return iso;
+  }
+}
 
 export function loadAdminOrders(): StoredOrder[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(ADMIN_KEY);
+    const raw = localStorage.getItem(ADMIN_ORDERS_KEY);
     if (raw) return JSON.parse(raw);
   } catch { /* ignore */ }
   return [];
 }
 
 export function saveAdminOrders(list: StoredOrder[]) {
-  localStorage.setItem(ADMIN_KEY, JSON.stringify(list));
+  localStorage.setItem(ADMIN_ORDERS_KEY, JSON.stringify(list));
+  notifyOrdersChanged();
 }
 
 export function loadUserOrders(): StoredOrder[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(USER_KEY);
+    const raw = localStorage.getItem(USER_ORDERS_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return (parsed as any[]).map((o) => ({
@@ -53,15 +74,52 @@ export function loadUserOrders(): StoredOrder[] {
         momoTransactionId: o.momoTransactionId,
         momoReference: o.momoReference,
         createdAt: o.createdAt,
+        updatedAt: o.updatedAt,
       }));
     }
   } catch { /* ignore */ }
   return [];
 }
 
+function saveUserOrdersRaw(list: any[]) {
+  localStorage.setItem(USER_ORDERS_KEY, JSON.stringify(list));
+}
+
+export function notifyOrdersChanged() {
+  if (typeof window === "undefined") return;
+  try {
+    window.dispatchEvent(new Event(ORDERS_EVENT));
+    localStorage.setItem("makola-orders-bump", String(Date.now()));
+  } catch { /* ignore */ }
+}
+
+/** Update status in BOTH admin + customer stores so whole site reflects immediately. */
+export function updateOrderStatus(id: string, status: string): StoredOrder[] {
+  const now = new Date().toISOString();
+  const admin = loadAdminOrders().map((o) =>
+    o.id === id ? { ...o, status, updatedAt: now } : o
+  );
+  localStorage.setItem(ADMIN_ORDERS_KEY, JSON.stringify(admin));
+
+  try {
+    const raw = localStorage.getItem(USER_ORDERS_KEY);
+    if (raw) {
+      const list = JSON.parse(raw) as any[];
+      const next = list.map((o) =>
+        o.id === id ? { ...o, status, updatedAt: now } : o
+      );
+      saveUserOrdersRaw(next);
+    }
+  } catch { /* ignore */ }
+
+  notifyOrdersChanged();
+  return admin;
+}
+
 export function resetAllOrders() {
-  localStorage.removeItem(ADMIN_KEY);
-  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(ADMIN_ORDERS_KEY);
+  localStorage.removeItem(USER_ORDERS_KEY);
+  notifyOrdersChanged();
 }
 
 export function findOrderById(id: string): StoredOrder | null {
@@ -69,4 +127,25 @@ export function findOrderById(id: string): StoredOrder | null {
   if (!q) return null;
   const all = [...loadAdminOrders(), ...loadUserOrders()];
   return all.find((o) => o.id.toLowerCase() === q || o.id.toLowerCase().includes(q)) || null;
+}
+
+/** Subscribe to order changes (same tab + other tabs). */
+export function onOrdersChanged(cb: () => void) {
+  if (typeof window === "undefined") return () => {};
+  const handler = () => cb();
+  const storageHandler = (e: StorageEvent) => {
+    if (
+      e.key === ADMIN_ORDERS_KEY ||
+      e.key === USER_ORDERS_KEY ||
+      e.key === "makola-orders-bump"
+    ) {
+      cb();
+    }
+  };
+  window.addEventListener(ORDERS_EVENT, handler);
+  window.addEventListener("storage", storageHandler);
+  return () => {
+    window.removeEventListener(ORDERS_EVENT, handler);
+    window.removeEventListener("storage", storageHandler);
+  };
 }
