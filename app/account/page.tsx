@@ -10,6 +10,13 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { useAuth } from "@/lib/auth";
 import { addFeedback } from "@/lib/feedback";
 
+function roleLabel(role: string) {
+  if (role === "SUPER_ADMIN") return "Super Admin";
+  if (role === "ADMIN") return "Admin";
+  if (role === "RIDER") return "Rider";
+  return "Buyer";
+}
+
 export default function AccountPage() {
   const { user, ready, updateProfile, deleteAccount, logout } = useAuth();
   const router = useRouter();
@@ -90,7 +97,6 @@ export default function AccountPage() {
           </div>
         )}
 
-        {/* Profile card */}
         <div className="rounded-2xl border border-orange-100 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
@@ -101,8 +107,10 @@ export default function AccountPage() {
                 <h1 className="text-xl font-extrabold text-makola-green dark:text-green-400">
                   My Profile
                 </h1>
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-                  {user.role.replace("_", " ")}
+                <p className="mt-1">
+                  <span className="inline-block rounded-full bg-orange-100 px-3 py-0.5 text-xs font-bold uppercase tracking-wide text-orange-700 dark:bg-orange-900/50 dark:text-orange-200">
+                    Role: {roleLabel(user.role)}
+                  </span>
                 </p>
               </div>
             </div>
@@ -201,10 +209,14 @@ export default function AccountPage() {
                 </p>
               )}
             </div>
+
+            <div>
+              <p className="text-xs font-semibold uppercase text-gray-400">Role</p>
+              <p className="mt-0.5 text-base font-bold text-makola-orange">{roleLabel(user.role)}</p>
+            </div>
           </div>
         </div>
 
-        {/* Feedback (optional) */}
         <div className="space-y-3 rounded-2xl border border-orange-100 bg-white p-4 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
           <h2 className="font-bold text-makola-green dark:text-green-400">
             Send feedback to admin
@@ -258,7 +270,6 @@ export default function AccountPage() {
           </button>
         </div>
 
-        {/* Logout */}
         <button
           type="button"
           className="btn-outline flex w-full items-center justify-center gap-2"
@@ -271,7 +282,6 @@ export default function AccountPage() {
           Log out
         </button>
 
-        {/* Delete account */}
         <button
           type="button"
           className="flex w-full items-center justify-center gap-2 rounded-2xl border-2 border-red-300 bg-red-50 py-3.5 font-bold text-red-600 dark:border-red-800 dark:bg-red-950/40"
